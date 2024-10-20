@@ -15,7 +15,8 @@
     - Update the radar "widget-header"
          - Rename the widget to "YOUR CITY Radar"
          - Update the iframe URL source to match the
-           lat and long of your location
+           lat and lon of your location
+    - Update the lat and lon in the forecast widget URL
 -->
 
 <!DOCTYPE html>
@@ -23,7 +24,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather Station Dashboard - Shizuoka</title>
+    <title>Weather Station Dashboard</title>
     <style>
         :root {
             --main-bg: #ffffff;
@@ -40,40 +41,48 @@
             line-height: 1.6;
         }
 
-		/* Header section */
-		.header {
-		    display: flex;
-		    justify-content: space-between;
-		    align-items: center;
-		    margin-bottom: 30px;
-		    border-bottom: 2px solid var(--border-color);
-		    padding-bottom: 20px;
-		}
-		
-		/* Center the datetime */
-		.datetime-container {
-		    flex-grow: 1;
-		    text-align: center;
-		}
-		
-		/* Adjust time and date styling */
-		.time {
-		    font-size: 3em; /* Adjust the size as needed */
-		    font-weight: bold;
-		    margin: 0;
-		}
-		
-		.date {
-		    font-size: 1.2em;
-		    color: var(--main-text);
-		    margin: 0;
-		}
-		
-		/* Right-aligned weather information */
-		.quick-weather {
-		    font-size: 1.2em;
-		    text-align: right;
-		}
+        /* Header section */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+        
+        /* Center the datetime */
+        .datetime-container {
+            flex-grow: 1;
+            text-align: center;
+        }
+        
+        /* Adjust time and date styling */
+        .time {
+            font-size: 3em; /* Adjust the size as needed */
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .date {
+            font-size: 1.2em;
+            color: var(--main-text);
+            margin: 0;
+        }
+        
+        /* Left-aligned spacer -- helps center the time and date*/
+        .header-spacer {
+            width: 15%;
+            font-size: 1.2em;
+            text-align: left;
+        }
+        
+        /* Right-aligned weather information */
+        .quick-weather {
+            width: 15%;
+            font-size: 1.2em;
+            text-align: right;
+        }
 
         /* Main content grid */
         .dashboard-grid {
@@ -140,12 +149,18 @@
         }
     </style>
 </head>
+
 <body>
     <div class="header">
+   		<!-- Spacer on top-left to help center the time and date -->
+        <div class="header-spacer">
+        </div>
+		<!-- Time and date in the middle -->
         <div class="datetime-container">
             <div class="time" id="time">Loading...</div>
             <div class="date" id="date">Loading...</div>
         </div>
+		<!-- Temp and humidity on top-right -->
         <div class="quick-weather">
             <div id="quick-temp">--°C</div>
             <div id="quick-humidity">Humidity: --%</div>
@@ -153,6 +168,7 @@
     </div>
     
     <div class="dashboard-grid">
+		<!-- Current weather details down the middle-left side -->
         <div class="widget">
             <div class="widget-header">Weather Details</div>
             <div class="weather-details" id="weather-details">
@@ -184,20 +200,24 @@
                     <div class="weather-label">Condition</div>
                     <div id="weather-condition">Loading...</div>
                 </div>
-
             </div>
         </div>
 
+		<!-- Radar across the middle-right -->
         <div class="widget">
-		    <div class="widget-header">Shizuoka Radar</div>
-		    <iframe 
-		        src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=m/s&zoom=12&overlay=radar&product=radar&level=surface&lat=34.975&lon=138.4088016&message=true&width=800&height=600" 
-		        style="width: 100%; height: 100%;" 
-		        frameborder="0" 
-		        scrolling="no">
-		    </iframe>
-		</div>
+            <div class="widget-header">Shizuoka Radar</div>
+            <iframe 
+                src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=m/s&zoom=12&overlay=radar&product=radar&level=surface&lat=34.9753097&lon=138.4088016&message=true&width=800&height=600" 
+                style="width: 100%; height: 90%;" 
+                frameborder="0" 
+                scrolling="no">
+            </iframe>
+        </div>
+    </div>
 
+    <!-- Nice forecast widget across the bottom -->
+    <div style=margin-top: 20px;">
+        <iframe width="100%" height="187" src="https://embed.windy.com/embed.html?type=forecast&location=coordinates&detail=true&detailLat=34.9753097&detailLon=138.4088016&metricTemp=°C&metricRain=mm&metricWind=m/s" frameborder="0"></iframe>
     </div>
 
     <script>
@@ -227,6 +247,7 @@
         
         // Weather update using OpenWeatherMap API
         async function updateWeather() {
+            // Add your api to the next line
             const WEATHER_API_KEY = 'YOUR_API_GOES_HERE';
             const city = 'Shizuoka'; // Shizuoka, Japan
             const country = 'JP';
@@ -274,16 +295,16 @@
             }
         }
 
-        // Radar update function for JMA radar
-		async function updateRadar() {
-		    try {
-		        const iframe = document.getElementById('radar-frame');
-		        iframe.src = iframe.src;  // Reload the iframe by setting the src to the same URL
-		    }
-		    catch (error) {
-	            console.error('Error fetching radar:', error);
-		    }
-		}
+        // Radar update function (reload the iframe)
+        async function updateRadar() {
+            try {
+                const iframe = document.getElementById('radar-frame');
+                iframe.src = iframe.src;  // Reload the iframe by setting the src to the same URL
+            }
+            catch (error) {
+                console.error('Error fetching radar:', error);
+            }
+        }
 
         // Update intervals
         setInterval(updateDateTime, 1000); // Update time every second
