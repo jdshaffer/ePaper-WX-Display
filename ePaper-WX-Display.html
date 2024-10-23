@@ -1,0 +1,394 @@
+<!-- 
+ A simple webpage that displays the time, date, and weather
+ (For use with old tablets to serve as "weather" displays)
+ Jeffrey D. Shaffer
+ 2024-10-20
+
+ Currently uses my personal API
+ Currently set for Shizuoka, Japan
+
+ To use it for yourself:
+    - You will need a (free) API from Openweathermap.org
+         - Insert it in the WEATHER_API_KEY line below
+    - Update the "city" and "country" information just
+      below the weather api key
+    - Update the radar "widget-header"
+         - Rename the widget to "YOUR CITY Radar"
+         - Update the iframe URL source to match the
+           lat and lon of your location
+    - Update the lat and lon in the forecast widget URL
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Station Dashboard</title>
+    <style>
+        :root {
+            --main-bg: #ffffff;
+            --main-text: #000000;
+            --border-color: #666666;
+        }
+
+        body {
+            font-family: serif;
+            background: var(--main-bg);
+            color: var(--main-text);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        /* Header section */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+        
+        /* Center the datetime */
+        .datetime-container {
+            flex-grow: 1;
+            text-align: center;
+        }
+        
+        /* Adjust time and date styling */
+        .time {
+            font-size: 3em; /* Adjust the size as needed */
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .date {
+            font-size: 1.2em;
+            color: var(--main-text);
+            margin: 0;
+        }
+        
+        /* Left-aligned spacer -- helps center the time and date*/
+        .header-spacer {
+            width: 15%;
+            font-size: 1.2em;
+            text-align: left;
+        }
+        
+        /* Right-aligned weather information */
+        .quick-weather {
+            width: 15%;
+            font-size: 1.2em;
+            text-align: right;
+        }
+
+        /* Main content grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: minmax(200px, 25%) 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .widget {
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            background: var(--main-bg);
+        }
+
+        .widget-header {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        /* Weather details styling */
+        .weather-details {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .weather-item {
+            border-bottom: 1px solid var(--border-color);
+            padding: 6px 0;
+        }
+
+        .weather-label {
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        /* Radar styling */
+        .radar-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        .radar-image {
+            width: 100%;
+            height: auto;
+            image-rendering: pixelated;
+            filter: grayscale(100%);
+        }
+
+        .radar-timestamp {
+            font-size: 0.9em;
+            text-align: right;
+            margin-top: 5px;
+        }
+
+        .error-message {
+            color: var(--main-text);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        /* Add button styling */
+        #fullscreen-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 1000;
+            /* Hide button after a few seconds */
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+        
+        #fullscreen-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Hide button after 3 seconds of inactivity */
+        #fullscreen-btn.hidden {
+            opacity: 0;
+        }
+
+        /* Show button on any mouse movement */
+        body:hover #fullscreen-btn {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Add fullscreen button -->
+    <button id="fullscreen-btn">⤢</button>
+
+    <div class="header">
+   		<!-- Spacer on top-left to help center the time and date -->
+        <div class="header-spacer">
+        </div>
+		<!-- Time and date in the middle -->
+        <div class="datetime-container">
+            <div class="time" id="time">Loading...</div>
+            <div class="date" id="date">Loading...</div>
+        </div>
+		<!-- Temp and humidity on top-right -->
+        <div class="quick-weather">
+            <div id="quick-temp">--°C</div>
+            <div id="quick-humidity">Humidity: --%</div>
+        </div>
+    </div>
+    
+    <div class="dashboard-grid">
+		<!-- Current weather details down the middle-left side -->
+        <div class="widget">
+            <div class="widget-header">Weather Details</div>
+            <div class="weather-details" id="weather-details">
+                <div class="weather-item">
+                    <div class="weather-label">Temperature</div>
+                    <div id="weather-temp">Loading...</div>
+                </div>
+                <div class="weather-item">
+                    <div class="weather-label">Feels Like</div>
+                    <div id="weather-feels-like">Loading...</div>
+                </div>
+                <div class="weather-item">
+                    <div class="weather-label">Humidity</div>
+                    <div id="weather-humidity">Loading...</div>
+                </div>
+                <div class="weather-item">
+                    <div class="weather-label">Pressure</div>
+                    <div id="weather-pressure">Loading...</div>
+                </div>
+                <div class="weather-item">
+                    <div class="weather-label">Wind</div>
+                    <div id="weather-wind">Loading...</div>
+                </div>
+                <div class="weather-item">
+                    <div class="weather-label">Cloud Cover</div>
+                    <div id="weather-clouds">Loading...</div>
+                </div>
+                <div class="weather-item">
+                    <div class="weather-label">Condition</div>
+                    <div id="weather-condition">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+		<!-- Radar across the middle-right -->
+        <div class="widget">
+            <div class="widget-header">Shizuoka Radar</div>
+            <iframe 
+                src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=m/s&zoom=12&overlay=radar&product=radar&level=surface&lat=34.9753097&lon=138.4088016&message=true&width=800&height=600" 
+                style="width: 100%; height: 90%;" 
+                frameborder="0" 
+                scrolling="no">
+            </iframe>
+        </div>
+    </div>
+
+    <!-- Nice forecast widget across the bottom -->
+    <div style=margin-top: 20px;">
+        <iframe width="100%" height="187" src="https://embed.windy.com/embed.html?type=forecast&location=coordinates&detail=true&detailLat=34.9753097&detailLon=138.4088016&metricTemp=°C&metricRain=mm&metricWind=m/s" frameborder="0"></iframe>
+    </div>
+
+    <script>
+        // Update date and time
+        function updateDateTime() {
+            const now = new Date();
+            
+            // Format time - big and bold
+            const timeOptions = { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true
+            };
+            document.getElementById('time').textContent = 
+                now.toLocaleTimeString('en-US', timeOptions);
+            
+            // Format date - smaller underneath
+            const dateOptions = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            };
+            document.getElementById('date').textContent = 
+                now.toLocaleDateString('en-US', dateOptions);
+        }
+        
+        // Weather update using OpenWeatherMap API
+        async function updateWeather() {
+            const WEATHER_API_KEY = '<YOUR_API_GOES_HERE';
+            const city = 'Shizuoka'; // Shizuoka, Japan
+            const country = 'JP';
+            
+            try {
+                const response = await fetch(
+                    `https://api.openweathermap.org/data/2.5/weather?q=${city},${country}&appid=${WEATHER_API_KEY}&units=metric`
+                );
+                
+                if (!response.ok) {
+                    throw new Error('Weather API response was not ok');
+                }
+                
+                const data = await response.json();
+                
+                // Update quick weather summary in header
+                document.getElementById('quick-temp').textContent = 
+                    `${Math.round(data.main.temp)}°C`;
+                document.getElementById('quick-humidity').textContent = 
+                    `Humidity: ${data.main.humidity}%`;
+                
+                // Update detailed weather information
+                document.getElementById('weather-condition').textContent = 
+                    data.weather[0].description;
+                document.getElementById('weather-temp').textContent = 
+                    `${Math.round(data.main.temp)}°C`;
+                document.getElementById('weather-feels-like').textContent = 
+                    `${Math.round(data.main.feels_like)}°C`;
+                document.getElementById('weather-humidity').textContent = 
+                    `${data.main.humidity}%`;
+                document.getElementById('weather-wind').textContent = 
+                    `${(data.wind.speed).toFixed(1)} m/s at ${data.wind.deg}°`;
+                document.getElementById('weather-pressure').textContent = 
+                    `${data.main.pressure} hPa`;
+                document.getElementById('weather-clouds').textContent = 
+                    `${data.clouds.all}%`;
+                
+            } catch (error) {
+                console.error('Error fetching weather:', error);
+                document.getElementById('weather-details').innerHTML = `
+                    <div class="error-message">
+                        Weather data temporarily unavailable. 
+                        Will retry in 5 minutes.
+                    </div>`;
+            }
+        }
+
+        // Radar update function (reload the iframe)
+        async function updateRadar() {
+            try {
+                const iframe = document.getElementById('radar-frame');
+                iframe.src = iframe.src;  // Reload the iframe by setting the src to the same URL
+            }
+            catch (error) {
+                console.error('Error fetching radar:', error);
+            }
+        }
+
+        // Update intervals
+        setInterval(updateDateTime, 1000); // Update time every second
+        setInterval(updateRadar, 600000);  // Radar every 10 minutes
+        setInterval(updateWeather, 600000); // Weather every 10 minutes
+
+        // Initial updates
+        updateDateTime();
+        updateRadar();
+        updateWeather();
+        
+                const fullscreenBtn = document.getElementById('fullscreen-btn');
+        let hideTimeout;
+
+        // Function to toggle fullscreen
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        // Function to hide the button after 3 seconds
+        function startHideTimeout() {
+            clearTimeout(hideTimeout);
+            fullscreenBtn.classList.remove('hidden');
+            hideTimeout = setTimeout(() => {
+                fullscreenBtn.classList.add('hidden');
+            }, 3000);
+        }
+
+        // Add click event listener to button
+        fullscreenBtn.addEventListener('click', toggleFullScreen);
+
+        // Show/hide button on mouse movement
+        document.addEventListener('mousemove', startHideTimeout);
+
+        // Handle fullscreen changes
+        document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement) {
+                // Optional: Do something when entering fullscreen
+                screen.orientation.lock('landscape').catch(e => {
+                    // Silently fail if orientation lock is not supported
+                });
+            } else {
+                // Optional: Do something when exiting fullscreen
+            }
+        });
+    </script>
+</body>
+</html>
