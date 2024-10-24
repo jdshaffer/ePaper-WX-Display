@@ -3,4 +3,4 @@ You need to add your own weather API.
 It includes a small "full screen" button in the top right.
 
 Example:
-<img width="1507" alt="スクリーンショット 2024-10-24 午後1 03 12" src="https://github.com/user-attachments/assets/0787bd6d-fc7a-4351-8d79-1f585b0f4b35">
+![スクリーンショット 2024-10-24 午後10 19 00](https://github.com/user-attachments/assets/77f175f1-5594-4190-a243-de5fa3f5aa5b)
