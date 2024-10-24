@@ -47,8 +47,8 @@
 
         #fullscreen-btn {
             position: fixed;
-            top: 10px;
-            left: 10px;
+            bottom: 10px;
+            right: 10px;
             z-index: 1000;
             background: rgba(255, 255, 255, 0.8);
             border: none;
@@ -65,7 +65,12 @@
             background: white;
             margin-bottom: 0.5rem;
         }
-
+        
+        .header-spacer div {
+            font-size: 1.5rem;
+            color: #666;
+        }
+        
         .datetime-container {
             display: flex;
             flex-direction: column;
@@ -166,6 +171,8 @@
     <header class="header">
    		<!-- Spacer on top-left to help center the time and date -->
         <div class="header-spacer">
+            <div id="sunrise-time">Sunrise: Loading...</div>
+            <div id="sunset-time">Sunset: Loading...</div>
         </div>
         <div class="datetime-container">
             <div style="margin:0 auto" id="time" class="time">Loading...</div>
@@ -256,7 +263,7 @@
             try {
                 const response = await fetch(`${WEATHER_API_URL}?q=${CITY_NAME},${COUNTRY_CODE}&appid=${WEATHER_API_KEY}`);
                 const data = await response.json();
-
+        
                 if (data.cod === 200) {
                     document.getElementById('quick-temp').textContent = `${kelvinToCelsius(data.main.temp)}°C`;
                     document.getElementById('quick-humidity').textContent = `Humidity: ${data.main.humidity}%`;
@@ -267,12 +274,17 @@
                     document.getElementById('weather-wind').textContent = formatWind(data.wind.speed, data.wind.deg);
                     document.getElementById('weather-clouds').textContent = `${data.clouds.all}%`;
                     document.getElementById('weather-condition').textContent = data.weather[0].main;
+                    const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                    const sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        
+                    // Update sunrise and sunset display
+                    document.getElementById('sunrise-time').textContent = `Sunrise: ${sunrise}`;
+                    document.getElementById('sunset-time').textContent = `Sunset : ${sunset}`;
                 }
             } catch (error) {
                 console.error('Error fetching weather data:', error);
             }
         }
-
         // Fullscreen functionality
         const fullscreenBtn = document.getElementById('fullscreen-btn');
         
