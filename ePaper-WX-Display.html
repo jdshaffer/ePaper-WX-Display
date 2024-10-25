@@ -2,7 +2,7 @@
  A simple webpage that displays the time, date, and weather
  (For use with old tablets to serve as "weather" displays)
  Jeffrey D. Shaffer
- 2024-10-24
+ 2024-10-25
 
  Currently uses my personal API
  Currently set for Shizuoka, Japan
@@ -10,7 +10,7 @@
  To use it for yourself:
     - You will need a (free) API from Openweathermap.org
          - Insert it in the WEATHER_API_KEY line below
-    - Update the "city" and "country" information just
+    - Update the LATITUDE and LONGITUDE information just
       below the weather api key
     - Update the radar "widget-header"
          - Rename the widget to "YOUR CITY Radar"
@@ -171,7 +171,6 @@
     <button id="fullscreen-btn">⤢</button>
 
     <header class="header">
-   		<!-- Spacer on top-left to help center the time and date -->
         <div class="header-spacer">
             <div id="sunrise-time">Sunrise: Loading...</div>
             <div id="sunset-time">Sunset: Loading...</div>
@@ -233,9 +232,9 @@
     <script>
         // Previous JavaScript for weather and time updates
         const WEATHER_API_KEY = '<YOUR_API_GOES_HERE>';
-        const WEATHER_API_URL = 'https://api.openweathermap.org/data/2.5/weather';
-        const CITY_NAME = 'Shizuoka';
-        const COUNTRY_CODE = 'JP';
+        const WEATHER_API_URL = 'https://api.openweathermap.org/data/2.5/weather/';
+        const LATITUDE = 34.9753;
+        const LONGITUDE = 138.4088;
         
         function updateDateTime() {
             const now = new Date();
@@ -263,9 +262,10 @@
 
         async function updateWeather() {
             try {
-                const response = await fetch(`${WEATHER_API_URL}?q=${CITY_NAME},${COUNTRY_CODE}&appid=${WEATHER_API_KEY}`);
+                // Update the weather data on the left
+                const response = await fetch(`${WEATHER_API_URL}/?lat=${LATITUDE}&lon=${LONGITUDE}&appid=${WEATHER_API_KEY}`);
                 const data = await response.json();
-        
+
                 if (data.cod === 200) {
                     document.getElementById('quick-temp').textContent = `${kelvinToCelsius(data.main.temp)}°C`;
                     document.getElementById('quick-humidity').textContent = `Humidity: ${data.main.humidity}%`;
@@ -277,16 +277,24 @@
                     document.getElementById('weather-clouds').textContent = `${data.clouds.all}%`;
                     document.getElementById('weather-condition').textContent = data.weather[0].main;
                     const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-                    const sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                    const sunset  = new Date(data.sys.sunset  * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
         
                     // Update sunrise and sunset display
                     document.getElementById('sunrise-time').textContent = `Sunrise: ${sunrise}`;
                     document.getElementById('sunset-time').textContent = `Sunset : ${sunset}`;
                 }
+
+                // Update the radar iframe
+                const radarIframe = document.querySelector('.radar-container iframe');
+                if (radarIframe) {
+                    radarIframe.src = radarIframe.src;
+                }
+
             } catch (error) {
                 console.error('Error fetching weather data:', error);
             }
         }
+        
         // Fullscreen functionality
         const fullscreenBtn = document.getElementById('fullscreen-btn');
         
